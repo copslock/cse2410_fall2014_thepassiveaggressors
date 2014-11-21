@@ -109,7 +109,7 @@
      <x>0</x>
      <y>0</y>
      <width>960</width>
-     <height>21</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -439,6 +439,7 @@
     <addaction name="separator"/>
     <addaction name="actionEditConfigurationProfiles"/>
     <addaction name="actionEditPreferences"/>
+    <addaction name="actionEditHideMainWindow"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -1359,6 +1360,20 @@
    </property>
    <property name="text">
     <string>Summary</string>
+   </property>
+  </action>
+  <action name="actionEditHideMainWindow">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Hide Main Window during capture</string>
+   </property>
+   <property name="toolTip">
+    <string>Hides Main Windows during capture</string>
    </property>
   </action>
   <action name="actionProtocol_Hierarchy">
