@@ -599,7 +599,7 @@ void MainWindow::startCapture() {
 #ifdef HAVE_LIBPCAP
     //Hide main Window if option is checked
     if(main_ui_->actionEditHideMainWindow->isChecked())
-        hide();
+        showMinimized();
 
 
     interface_options interface_opts;
