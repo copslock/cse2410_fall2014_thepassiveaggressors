@@ -24,6 +24,8 @@
 
 #include "wireshark_application.h"
 
+//#include <QMessageBox>
+
 PacketCommentDialog::PacketCommentDialog(QWidget *parent, QString comment) :
     QDialog(parent),
     pc_ui_(new Ui::PacketCommentDialog)
@@ -32,7 +34,6 @@ PacketCommentDialog::PacketCommentDialog(QWidget *parent, QString comment) :
 
     pc_ui_->commentTextEdit->setPlainText(comment);
 }
-
 PacketCommentDialog::~PacketCommentDialog()
 {
     delete pc_ui_;
@@ -40,7 +41,22 @@ PacketCommentDialog::~PacketCommentDialog()
 
 QString PacketCommentDialog::text()
 {
-    return pc_ui_->commentTextEdit->toPlainText();
+
+    //QString string = pc_ui_->commentTextEdit->toPlainText();
+    //QMessageBox qmsg;
+    //qmsg.setText(string);
+    //qmsg.exec();
+
+    // The Commented out code above proves that PacketCommentDialog::text() is converting the QString fine
+
+    QString string = pc_ui_->commentTextEdit->toPlainText();
+
+    string.replace(QString("\n"),QString(".  "));                   //Temporary Fix. Replace new lines with a new sentance
+    while(string.contains(QString(".  .  "))) {
+        string.replace(QString(".  .  "),QString(".  "));
+    }
+
+    return string;
 }
 
 void PacketCommentDialog::on_buttonBox_helpRequested()
