@@ -106,6 +106,8 @@
 gboolean auto_scroll_live;
 #endif
 
+gboolean output_in_rtf = 0;
+
 static int read_packet(capture_file *cf, dfilter_t *dfcode, epan_dissect_t *edt,
     column_info *cinfo, gint64 offset);
 
@@ -2215,6 +2217,94 @@ typedef enum {
   PSP_FAILED
 } psp_return_t;
 
+static const struct { int e; const char* s; } encaps[] = {
+	{ WTAP_ENCAP_ETHERNET, "ETHER" },
+	{ WTAP_ENCAP_MTP2, "MTP-L2" },
+	{ WTAP_ENCAP_ATM_PDUS, "SSCOP" },
+	{ WTAP_ENCAP_MTP3, "SSCF" },
+	{ WTAP_ENCAP_CHDLC, "HDLC" },
+	/* ... */
+	{ 0, NULL }
+};
+
+// writes passed data to an rtf file
+void output_rtf_packet(FILE *file, const struct wtap_pkthdr *phdr, const guint8 *pd) {
+  #define K12BUF_SIZE 196808
+
+  char *buf;
+  char *p;
+  const char* str_enc;
+  guint i;
+  guint ns;
+  guint ms;
+  struct tm *tmp;
+
+  /* Don't write anything bigger than we're willing to read. */
+  if (phdr->caplen > WTAP_MAX_PACKET_SIZE) {
+	  return;
+  }
+
+  str_enc = NULL;
+  for(i=0; encaps[i].s; i++) {
+	  if (phdr->pkt_encap == encaps[i].e) {
+		  str_enc = encaps[i].s;
+		  break;
+	  }
+  }
+
+  buf = (char *)g_malloc(90);
+  p = buf;
+
+  ms = phdr->ts.nsecs / 1000000;
+  ns = (phdr->ts.nsecs - (1000000*ms))/1000;
+
+  // add timestamp to the file
+  tmp = gmtime(&phdr->ts.secs);
+  if (tmp == NULL)
+	  g_snprintf(p, 90, "+---------+---------------+----------+\\line\r\nXX:XX:XX,");
+  else
+	  strftime(p, 90, "+---------+---------------+----------+\\line\r\n%H:%M:%S,", tmp);
+  fwrite(buf, 1, strlen(p), file);
+
+  // output encoding
+  fprintf(file, "%.3d,%.3d   %s\\line\r\n|0   |", ms, ns, str_enc);
+
+  // color the source address green
+  fprintf(file, "\r\n\\cf3\r\n");
+  for(i = 0; i < 6; i++) {
+    fprintf(file, "%.2x|", pd[i]);
+  }
+
+  // color the destination red
+  fprintf(file, "\r\n\\cf2\r\n");
+  for(i = 6; i < 12; i++) {
+    fprintf(file, "%.2x|", pd[i]);
+  }
+
+  // color the configuration blue
+  fprintf(file, "\r\n\\cf4\r\n");
+
+  for(i = 12; i < 14; i++) {
+    fprintf(file, "%.2x|", pd[i]);
+  }
+
+  // color the variable output black
+  fprintf(file, "\r\n\\cf1\r\n");
+  for(i = 14; i < phdr->caplen; i++) {
+    fprintf(file, "%.2x|", pd[i]);
+  }
+
+  fprintf(file, "\\line\\line\r\n\r\n");
+
+  g_free(buf);
+}
+
+typedef struct {
+  wtap_dumper *pdh;
+  const char  *fname;
+  int          file_type;
+} save_callback_args_t;
+
 static psp_return_t
 process_specified_records(capture_file *cf, packet_range_t *range,
     const char *string1, const char *string2, gboolean terminate_is_stop,
@@ -2237,6 +2327,12 @@ process_specified_records(capture_file *cf, packet_range_t *range,
   int              progbar_quantum;
   range_process_e  process_this;
   struct wtap_pkthdr phdr;
+  /* This is a debugging rtf file. As such, its output will be similar
+     to K12Text, but with added color coding to denote important sections
+  */
+  FILE *rtf_file = 0;
+  char* rtf_filename;
+  guint8 *pd;
 
   memset(&phdr, 0, sizeof(struct wtap_pkthdr));
   ws_buffer_init(&buf, 1500);
@@ -2253,6 +2349,22 @@ process_specified_records(capture_file *cf, packet_range_t *range,
 
   progbar_stop_flag = FALSE;
   g_get_current_time(&progbar_start_time);
+
+  if (output_in_rtf) {
+    // parse the passed name and append .rtf
+    save_callback_args_t *args = (save_callback_args_t *) callback_args;
+    rtf_filename = (char *) malloc(strlen(args->fname) + strlen(".rtf"));
+    strcpy(rtf_filename, args->fname);
+    strcat(rtf_filename, ".rtf");
+
+    // open output file
+    rtf_file = fopen(rtf_filename, "w");
+
+    // write the rtf file header
+    if (rtf_file) {
+      fprintf(rtf_file, "{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Courier;}}\r\n{\\colortbl;\\red0\\green0\\blue0;\\red255\\green0\\blue0;\\red0\\green255\\blue0;\\red0\\green0\\blue255;}\r\n");
+    }
+  }
 
   if (range != NULL)
     packet_range_process_init(range);
@@ -2323,11 +2435,16 @@ process_specified_records(capture_file *cf, packet_range_t *range,
       ret = PSP_FAILED;
       break;
     }
+    pd = ws_buffer_start_ptr(&buf);
     /* Process the packet */
-    if (!callback(cf, fdata, &phdr, ws_buffer_start_ptr(&buf), callback_args)) {
+    if (!callback(cf, fdata, &phdr, pd, callback_args)) {
       /* Callback failed.  We assume it reported the error appropriately. */
       ret = PSP_FAILED;
       break;
+    } else {
+      if (output_in_rtf && rtf_file) {
+        output_rtf_packet(rtf_file, &phdr, pd);
+      }
     }
   }
 
@@ -2335,6 +2452,12 @@ process_specified_records(capture_file *cf, packet_range_t *range,
      it was created. */
   if (progbar != NULL)
     destroy_progress_dlg(progbar);
+
+  // write rtf file closing point
+  if (output_in_rtf && rtf_file) {
+    fwrite("}", 1, 1, rtf_file);
+    fclose(rtf_file);
+  }
 
   ws_buffer_free(&buf);
 
@@ -4081,12 +4204,6 @@ cf_comment_types(capture_file *cf)
     comment_types |= WTAP_COMMENT_PER_PACKET;
   return comment_types;
 }
-
-typedef struct {
-  wtap_dumper *pdh;
-  const char  *fname;
-  int          file_type;
-} save_callback_args_t;
 
 /*
  * Save a capture to a file, in a particular format, saving either

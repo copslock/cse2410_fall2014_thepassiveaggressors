@@ -182,6 +182,8 @@
     <addaction name="actionCaptureRestart"/>
     <addaction name="actionCaptureCaptureFilters"/>
     <addaction name="actionCaptureRefreshInterfaces"/>
+	<addaction name="actionToggleUnicode"/>
+	<addaction name="actionToggleRtfGen"/>
     <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -934,6 +936,28 @@
    </property>
    <property name="toolTip">
     <string>Refresh interfaces</string>
+   </property>
+  </action>
+	<action name="actionToggleUnicode">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Toggle Unicode Display</string>
+   </property>
+   <property name="toolTip">
+    <string>Required prior to dissecting packets. Will lead to strange binary stream</string>
+   </property>
+  </action>
+  <action name="actionToggleRtfGen">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Toggle rtf File Generation</string>
+   </property>
+   <property name="toolTip">
+    <string>When enabled, saving a file will also generate a color coded rtf file</string>
    </property>
   </action>
   <action name="actionCaptureRestart">

@@ -2401,6 +2401,15 @@ void MainWindow::on_actionCaptureRefreshInterfaces_triggered()
 }
 #endif
 
+void MainWindow::on_actionToggleUnicode_triggered()
+{
+    FollowStreamDialog::useUnicode = !(FollowStreamDialog::useUnicode);
+}
+
+void MainWindow::on_actionToggleRtfGen_triggered()
+{
+    output_in_rtf = !(output_in_rtf);
+}
 
 /*
  * Editor modelines

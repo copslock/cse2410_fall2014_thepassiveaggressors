@@ -34,6 +34,8 @@
 extern "C" {
 #endif /* __cplusplus */
 
+extern gboolean output_in_rtf;
+
 /** Return values from functions that only can succeed or fail. */
 typedef enum {
     CF_OK,      /**< operation succeeded */

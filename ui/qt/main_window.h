@@ -289,6 +289,9 @@ private slots:
     void on_actionCaptureRefreshInterfaces_triggered();
 #endif
 
+    void on_actionToggleUnicode_triggered();
+    void on_actionToggleRtfGen_triggered();
+
     void matchFieldFilter(FilterAction::Action action, FilterAction::ActionType filter_type);
     void on_actionAnalyzeAAFSelected_triggered();
     void on_actionAnalyzeAAFNotSelected_triggered();

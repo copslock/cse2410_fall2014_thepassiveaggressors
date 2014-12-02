@@ -65,6 +65,7 @@ class FollowStreamDialog : public QDialog
     Q_OBJECT
 
 public:
+    static bool useUnicode;
     explicit FollowStreamDialog(QWidget *parent = 0, follow_type_t type = FOLLOW_TCP, capture_file *cf = NULL);
     ~FollowStreamDialog();
 
