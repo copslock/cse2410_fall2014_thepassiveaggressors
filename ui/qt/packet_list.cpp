@@ -431,6 +431,7 @@ void PacketList::selectionChanged (const QItemSelection & selected, const QItemS
     QTreeView::selectionChanged(selected, deselected);
 
     if (!cap_file_) return;
+    if (selected.empty()) return;
 
     int row = selected.first().top();
     cf_select_packet(cap_file_, row);
