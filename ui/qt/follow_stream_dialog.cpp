@@ -191,6 +191,8 @@ void FollowStreamDialog::findText(bool go_back)
 void FollowStreamDialog::saveAs()
 {
     QString file_name = QFileDialog::getSaveFileName(this, "Wireshark: Save stream content as");
+    if (file_name == NULL)
+        return;
     file_.setFileName(file_name);
     file_.open( QIODevice::WriteOnly );
     QTextStream out(&file_);
@@ -205,8 +207,18 @@ void FollowStreamDialog::saveAs()
     }
 
     save_as_ = false;
-
     file_.close();
+
+    // outputs a stand alone rtf format version that maintains coloring
+    if (output_in_rtf)
+    {
+        QFile rtf_file;
+        rtf_file.setFileName(file_name + ".rtf");
+        rtf_file.open( QIODevice::WriteOnly );
+        QTextStream rtf_out (&rtf_file);
+        rtf_out << rtf_text << "\r\n}";
+        rtf_file.close();
+    }
 }
 
 void FollowStreamDialog::helpButton()
@@ -510,6 +522,8 @@ FollowStreamDialog::follow_stream()
 
 void FollowStreamDialog::add_text(QString text, gboolean is_from_server, guint32 packet_num)
 {
+    // in rtf files, \line denotes a new line.
+    rtf_text = rtf_text + text.replace(QString("\r\n"), QString("\\line\r\n")).replace(QString("{"), QString("\{"));
     if (save_as_ == true)
     {
         //FILE *fh = (FILE *)arg;
@@ -610,21 +624,11 @@ void FollowStreamDialog::keyPressEvent(QKeyEvent *event)
 }
 
 static inline void sanitize_buffer(char *buffer, size_t nchars) {
-    if (!FollowStreamDialog::useUnicode) {
-        for (size_t i = 0; i < nchars; i++) {
-            if (buffer[i] == '\n' || buffer[i] == '\r' || buffer[i] == '\t')
-                continue;
-            if (! g_ascii_isprint((guchar)buffer[i])) {
-                buffer[i] = '.';
-            }
-        }
-    } else {
-        for (size_t i = 0; i < nchars; i++) {
-            if (buffer[i] == '\n' || buffer[i] == '\r' || buffer[i] == '\t')
-                continue;
-            if (! g_unichar_isprint((guchar)buffer[i])) {
-                buffer[i] = '.';
-            }
+    for (size_t i = 0; i < nchars; i++) {
+        if (buffer[i] == '\n' || buffer[i] == '\r' || buffer[i] == '\t')
+            continue;
+        if (! g_ascii_isprint((guchar)buffer[i])) {
+            buffer[i] = '.';
         }
     }
 }
@@ -1246,8 +1250,12 @@ FollowStreamDialog::follow_read_tcp_stream()
     char                buffer[FLT_BUF_SIZE+1]; /* +1 to fix ws bug 1043 */
     size_t              nchars;
     frs_return_t        frs_return;
+    int                 prev_source; /* 0 = firstPacket, 1 = client, 2 = server */
 
     iplen = (follow_info_.is_ipv6) ? 16 : 4;
+    
+    rtf_text = "{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Courier;}}\r\n{\\colortbl;\\red255\\green0\\blue0;\\red0\\green0\\blue255;}";
+    prev_source = 0;
 
     data_out_fp = ws_fopen(data_out_filename_.toUtf8().constData(), "rb");
     if (data_out_fp == NULL) {
@@ -1299,6 +1307,17 @@ FollowStreamDialog::follow_read_tcp_stream()
 
             if (!skip)
             {
+                // avoid repeating cf tags in the rtf file. Only apply them on a change
+                if (prev_source != 1 && !is_server)
+                {
+                    rtf_text = rtf_text + "\r\n\\cf1\r\n";
+                    prev_source = 1;
+                } else if (prev_source != 2 && is_server)
+                {
+                    rtf_text = rtf_text + "\r\n\\cf2\r\n";
+                    prev_source = 2;
+                }
+
                 frs_return = follow_show(buffer,
                                          nchars, is_server, sc.packet_num, global_pos);
                 if(frs_return == FRS_PRINT_ERROR) {
