@@ -139,6 +139,8 @@ private:
 
     bool                    save_as_;
     QFile                   file_;
+
+    QString                 rtf_text;
 };
 
 #endif // FOLLOW_STREAM_DIALOG_H
