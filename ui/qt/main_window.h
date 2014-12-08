@@ -71,10 +71,12 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
+    static bool isUtc;
+    static void setTimeType();
+
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     void setPipeInputHandler(gint source, gpointer user_data, int *child_process, pipe_input_cb_t input_cb);
-
     QString getFilter();
 
 protected:
@@ -291,6 +293,7 @@ private slots:
 
     void on_actionToggleUnicode_triggered();
     void on_actionToggleRtfGen_triggered();
+    void on_actionLocalTime_triggered();
 
     void matchFieldFilter(FilterAction::Action action, FilterAction::ActionType filter_type);
     void on_actionAnalyzeAAFSelected_triggered();

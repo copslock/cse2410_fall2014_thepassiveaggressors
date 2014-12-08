@@ -184,6 +184,7 @@
     <addaction name="actionCaptureRefreshInterfaces"/>
 	<addaction name="actionToggleUnicode"/>
 	<addaction name="actionToggleRtfGen"/>
+    <addaction name="actionLocalTime" />
     <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuHelp">
@@ -958,6 +959,17 @@
    </property>
    <property name="toolTip">
     <string>When enabled, saving a file will also generate a color coded rtf file</string>
+   </property>
+  </action>
+    <action name="actionLocalTime">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Capture Packets in UTC time</string>
+   </property>
+   <property name="toolTip">
+    <string>When enabled, Packet timestamps will be in UTC time</string>
    </property>
   </action>
   <action name="actionCaptureRestart">

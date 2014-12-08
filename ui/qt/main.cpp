@@ -1034,6 +1034,7 @@ int main(int argc, char *argv[])
      */
 
     g_log(NULL, G_LOG_LEVEL_DEBUG, "FIX: timestamp types should be set elsewhere");
+
     timestamp_set_type(TS_RELATIVE);
     timestamp_set_precision(TS_PREC_AUTO_USEC);
     timestamp_set_seconds_type(TS_SECONDS_DEFAULT);
@@ -1139,7 +1140,14 @@ int main(int argc, char *argv[])
     g_main_loop_new(NULL, FALSE);
     return wsApp->exec();
 }
+bool MainWindow::isUtc = false;
 
+void MainWindow::setTimeType() {
+    if (MainWindow::isUtc) {
+            timestamp_set_type(TS_UTC);
+    } else
+        timestamp_set_type(TS_RELATIVE);
+}
 /*
  * Editor modelines
  *

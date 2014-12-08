@@ -2,12 +2,15 @@
 <ui version="4.0">
  <class>CapturePreferencesFrame</class>
  <widget class="QFrame" name="CapturePreferencesFrame">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>354</width>
-    <height>194</height>
+    <width>381</width>
+    <height>225</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -104,6 +107,16 @@
      </property>
      <property name="text">
       <string>Show the capture summary dialog while capturing</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="Localtimecheckbox">
+     <property name="text">
+      <string>Capture packets in UTC time</string>
+     </property>
+     <property name="tristate">
+      <bool>false</bool>
      </property>
     </widget>
    </item>

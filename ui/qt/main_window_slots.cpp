@@ -2411,6 +2411,12 @@ void MainWindow::on_actionToggleRtfGen_triggered()
     output_in_rtf = !(output_in_rtf);
 }
 
+void MainWindow::on_actionLocalTime_triggered()
+{
+    qDebug() << "WORKED";
+    MainWindow::isUtc = !MainWindow::isUtc;
+    MainWindow::setTimeType();
+}
 /*
  * Editor modelines
  *
